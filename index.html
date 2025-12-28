@@ -192,69 +192,45 @@
         });
 
 function sendData(data) {
+    // 1. Проверяем старт
+    alert("Начинаю отправку..."); 
+    
     tg.MainButton.showProgress();
-    const btnHtml = document.getElementById('btn-submit');
-    if(btnHtml) {
-        btnHtml.disabled = true;
-        btnHtml.textContent = "Сохраняю...";
-    }
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('statusMsg').style.display = 'none';
+    // ... остальной код UI ...
 
-    // ВАЖНО: Убрали mode: 'no-cors' и оставили text/plain
     fetch(APPSSCRIPTURL, {
         method: "POST",
-        headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-        },
+        // ... ваши заголовки ...
         body: JSON.stringify(data)
     })
     .then(response => {
-        // Проверяем статус ответа
-        if (!response.ok) {
-            throw new Error(`Ошибка сети: ${response.status}`);
-        }
-        return response.json();
+        // 2. Проверяем, пришел ли ответ
+        alert("Ответ сервера: " + response.status); 
+        return response.text(); // Читаем как текст, чтобы увидеть ошибку, если это не JSON
     })
-    .then(result => {
-        // Логика успеха
-        if (result.success) {
-            tg.MainButton.hideProgress();
-            if(btnHtml) {
-                btnHtml.disabled = false;
-                btnHtml.textContent = "Сохранить";
+    .then(text => {
+        // 3. Смотрим, что внутри
+        alert("Текст ответа: " + text.substring(0, 100)); 
+        
+        try {
+            const result = JSON.parse(text); // Пробуем парсить
+            if (result.success) {
+                alert("Успех!");
+                // ... ваш код успеха ...
+            } else {
+                alert("Ошибка логики: " + result.error);
             }
-            document.getElementById('loader').style.display = 'none';
-            
-            tg.HapticFeedback.notificationOccurred('success');
-            showStatus('Сохранено!', 'success');
-            
-            // Очистка полей
-            document.getElementById('amount').value = '';
-            document.getElementById('name').value = '';
-            document.getElementById('comment').value = '';
-            
-            // Закрытие приложения (опционально)
-            if (tg.platform !== 'unknown' && tg.platform !== 'web') {
-                 setTimeout(() => tg.close(), 1000);
-            }
-        } else {
-            throw new Error(result.error || "Неизвестная ошибка скрипта");
+        } catch (e) {
+            alert("Ошибка парсинга JSON! Пришел HTML?");
+            throw new Error("Сервер вернул не JSON: " + text.substring(0, 50));
         }
     })
     .catch(error => {
-        console.error("Error", error);
-        tg.MainButton.hideProgress();
-        if(btnHtml) {
-            btnHtml.disabled = false;
-            btnHtml.textContent = "Сохранить";
-        }
-        document.getElementById('loader').style.display = 'none';
-        tg.HapticFeedback.notificationOccurred('error');
-        showStatus("Ошибка: " + error.message, "error");
+        // 4. Ловим сетевые ошибки
+        alert("CATCH ERROR: " + error.message);
+        // ... ваш код скрытия лоадера ...
     });
 }
-
 
         function showStatus(text, type) {
             const el = document.getElementById('statusMsg');
@@ -270,7 +246,3 @@ function sendData(data) {
 </body>
 
 </html>
-
-
-
-
