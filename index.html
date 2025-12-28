@@ -191,67 +191,69 @@
             });
         });
 
-               function sendData(data) {
-            tg.MainButton.showProgress();
-            
-            // Если есть кнопка HTML, блокируем её тоже
-            const btnHtml = document.getElementById('btn-submit');
-            if(btnHtml) {
-                btnHtml.disabled = true;
-                btnHtml.textContent = "Сохранение...";
-            }
+function sendData(data) {
+    tg.MainButton.showProgress();
+    const btnHtml = document.getElementById('btn-submit');
+    if(btnHtml) {
+        btnHtml.disabled = true;
+        btnHtml.textContent = "Сохраняю...";
+    }
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('statusMsg').style.display = 'none';
 
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('statusMsg').style.display = 'none';
-
-            // Google Apps Script имеет странность с CORS. 
-            // Самый надежный способ - отправить как text/plain, но внутри JSON.
-            // Google это переварит благодаря JSON.parse(e.postData.contents)
-            
-            fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors', // ВАЖНО: это отключает чтение ответа, но гарантирует доставку
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(() => {
-                // При mode: 'no-cors' мы не узнаем ответ сервера (успех или ошибка).
-                // Мы просто считаем, что если дошли сюда - значит ушло.
-                tg.MainButton.hideProgress();
-                if(btnHtml) {
-                    btnHtml.disabled = false;
-                    btnHtml.textContent = "СОХРАНИТЬ РАСХОД";
-                }
-                document.getElementById('loader').style.display = 'none';
-
-                tg.HapticFeedback.notificationOccurred('success');
-                showStatus("Отправлено!", "success");
-                
-                // Очистка
-                document.getElementById('amount').value = "";
-                document.getElementById('name').value = "";
-                document.getElementById('comment').value = "";
-                
-                // Закрываем через паузу
-                if (tg.platform !== 'unknown' && tg.platform !== 'web') {
-                     setTimeout(() => tg.close(), 1000);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                tg.MainButton.hideProgress();
-                if(btnHtml) {
-                    btnHtml.disabled = false;
-                    btnHtml.textContent = "СОХРАНИТЬ РАСХОД";
-                }
-                document.getElementById('loader').style.display = 'none';
-                
-                tg.HapticFeedback.notificationOccurred('error');
-                showStatus("Ошибка сети: " + error.message, "error");
-            });
+    // ВАЖНО: Убрали mode: 'no-cors' и оставили text/plain
+    fetch(APPSSCRIPTURL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        // Проверяем статус ответа
+        if (!response.ok) {
+            throw new Error(`Ошибка сети: ${response.status}`);
         }
+        return response.json();
+    })
+    .then(result => {
+        // Логика успеха
+        if (result.success) {
+            tg.MainButton.hideProgress();
+            if(btnHtml) {
+                btnHtml.disabled = false;
+                btnHtml.textContent = "Сохранить";
+            }
+            document.getElementById('loader').style.display = 'none';
+            
+            tg.HapticFeedback.notificationOccurred('success');
+            showStatus('Сохранено!', 'success');
+            
+            // Очистка полей
+            document.getElementById('amount').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('comment').value = '';
+            
+            // Закрытие приложения (опционально)
+            if (tg.platform !== 'unknown' && tg.platform !== 'web') {
+                 setTimeout(() => tg.close(), 1000);
+            }
+        } else {
+            throw new Error(result.error || "Неизвестная ошибка скрипта");
+        }
+    })
+    .catch(error => {
+        console.error("Error", error);
+        tg.MainButton.hideProgress();
+        if(btnHtml) {
+            btnHtml.disabled = false;
+            btnHtml.textContent = "Сохранить";
+        }
+        document.getElementById('loader').style.display = 'none';
+        tg.HapticFeedback.notificationOccurred('error');
+        showStatus("Ошибка: " + error.message, "error");
+    });
+}
 
 
         function showStatus(text, type) {
@@ -268,4 +270,5 @@
 </body>
 
 </html>
+
 
