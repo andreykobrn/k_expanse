@@ -158,7 +158,7 @@
         });
 
         // URL твоего Google Apps Script (сохранил твой URL)
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTLZFM28m2p1qaXwuAZzojuFazw_ezGq_QTS4iKp8b7flOX9Hk49f9Lk4ZOtJKAy0B/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz69sYc0YBFlhNtu5CXSJkIoc-CXO0N-OmLgv0MBC5butcGtl8TUxqdZvSTNa501Y6e/exec";
 
         // Обработка клика по главной кнопке
         tg.MainButton.onClick(function() {
@@ -198,11 +198,11 @@ function sendData(data) {
     tg.MainButton.showProgress();
     // ... остальной код UI ...
 
-    fetch(APPSSCRIPTURL, {
-        method: "POST",
-        // ... ваши заголовки ...
-        body: JSON.stringify(data)
-    })
+fetch(APPSSCRIPTURL, {
+    method: "POST", // ОБЯЗАТЕЛЬНО
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(data)
+})
     .then(response => {
         // 2. Проверяем, пришел ли ответ
         alert("Ответ сервера: " + response.status); 
@@ -246,3 +246,4 @@ function sendData(data) {
 </body>
 
 </html>
+
