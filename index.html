@@ -2,248 +2,300 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Расход</title>
-    <!-- Подключаем Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учет расходов</title>
     <style>
-        /* Используем CSS переменные Telegram для нативной темы */
+        :root {
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --hint-color: #888888;
+            --accent-color: #2b78e4; /* Синий цвет вместо дефолтного */
+            --button-text: #ffffff;
+            --input-bg: #f0f2f5;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 16px;
-            box-sizing: border-box;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
         }
 
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         h3 {
             margin-top: 0;
-            color: var(--tg-theme-hint-color, #888);
-            font-weight: 500;
-            font-size: 14px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
         }
 
-        .card {
-            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            border-radius: 12px;
-            padding: 0;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .form-row {
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--tg-theme-bg-color, #e0e0e0); /* Разделитель цветом фона */
-            padding: 0 16px;
-        }
-
-        .form-row:last-child {
-            border-bottom: none;
+        .form-group {
+            margin-bottom: 20px;
         }
 
         label {
-            width: 100px;
-            color: var(--tg-theme-text-color);
-            font-size: 16px;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--hint-color);
+            font-weight: 500;
         }
 
-        input, select, textarea {
-            flex: 1;
-            padding: 14px 0;
-            border: none;
-            background: transparent;
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid transparent;
+            background-color: var(--input-bg);
+            border-radius: 8px;
             font-size: 16px;
-            color: var(--tg-theme-text-color);
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        input:focus {
             outline: none;
-            font-family: inherit;
+            background-color: #fff;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(43, 120, 228, 0.2);
         }
 
-        input::placeholder, textarea::placeholder {
-            color: var(--tg-theme-hint-color, #a8a8a8);
+        /* Сетка категорий */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
 
-        /* Убираем стрелку у select для чистоты, или оставляем */
-        select {
-            -webkit-appearance: none;
-            background-image: none;
-        }
-        
-        /* Спиннер загрузки */
-        .loader {
+        .category-radio {
             display: none;
+        }
+
+        .category-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background-color: var(--input-bg);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
             text-align: center;
-            margin-top: 20px;
-            color: var(--tg-theme-link-color, #2481cc);
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            min-height: 44px;
+        }
+
+        /* Состояние выбранной категории */
+        .category-radio:checked + .category-btn {
+            background-color: rgba(43, 120, 228, 0.1);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .main-button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent-color);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .main-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .main-button:active {
+            opacity: 0.8;
         }
         
-        /* Анимация ошибки/успеха */
-        .status-msg {
+        .status-message {
             text-align: center;
             margin-top: 10px;
             font-size: 14px;
             display: none;
         }
-        .error { color: #ff3b30; }
-        .success { color: #34c759; }
-
+        
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Блок суммы и категории -->
-        <h3>Основные данные</h3>
-        <div class="card">
-            <div class="form-row">
-                <input type="number" id="amount" placeholder="Сумма (₽)" style="font-size: 20px; font-weight: 500;" inputmode="decimal" autofocus>
-            </div>
-            <div class="form-row">
-                <select id="category">
-                    <option value="" disabled selected>Категория</option>
-                    <option value="Отдых с удовольствием">Отдых с удовольствием</option>
-                    <option value="Продукты сверх лимита">Продукты сверх лимита</option>
-                    <option value="Подписки">Подписки</option>
-                    <option value="Хозтовары">Хозтовары</option>
-                    <option value="Бензин">Бензин</option>
-                    <option value="Медицина">Медицина</option>
-                    <option value="Косметика">Косметика</option>
-                    <option value="Бьюти">Бьюти</option>
-                    <option value="Одежда">Одежда</option>
-                    <option value="Подарки">Подарки</option>
-                    <option value="Обучение">Обучение</option>
-                    <option value="Квартира">Квартира</option>
-                    <option value="Кредиты">Кредиты</option>
-                    <option value="Другое">Другое</option>
-                </select>
+
+<div class="container">
+    <form id="expenseForm">
+        <h3>Новый расход</h3>
+
+        <!-- Сумма -->
+        <div class="form-group">
+            <label>Сумма</label>
+            <input type="number" id="amount" name="amount" placeholder="0" inputmode="decimal" required>
+        </div>
+
+        <!-- Категории -->
+        <div class="form-group">
+            <label>Категория</label>
+            <div class="categories-grid">
+                <label>
+                    <input type="radio" name="category" value="Продукты" class="category-radio" checked>
+                    <div class="category-btn">Продукты</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Отдых с удовольствием" class="category-radio">
+                    <div class="category-btn">Отдых</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Продукты сверх лимита" class="category-radio">
+                    <div class="category-btn">Продукты+</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Подписки" class="category-radio">
+                    <div class="category-btn">Подписки</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Хозтовары" class="category-radio">
+                    <div class="category-btn">Хозтовары</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Бензин" class="category-radio">
+                    <div class="category-btn">Бензин</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Медицина" class="category-radio">
+                    <div class="category-btn">Медицина</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Косметика" class="category-radio">
+                    <div class="category-btn">Косметика</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Бьюти" class="category-radio">
+                    <div class="category-btn">Бьюти</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Одежда" class="category-radio">
+                    <div class="category-btn">Одежда</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Подарки" class="category-radio">
+                    <div class="category-btn">Подарки</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Обучение" class="category-radio">
+                    <div class="category-btn">Обучение</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Квартира" class="category-radio">
+                    <div class="category-btn">Квартира</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Кредиты" class="category-radio">
+                    <div class="category-btn">Кредиты</div>
+                </label>
+                <label>
+                    <input type="radio" name="category" value="Другое" class="category-radio">
+                    <div class="category-btn">Другое</div>
+                </label>
             </div>
         </div>
 
-        <!-- Блок деталей -->
-        <h3>Детали</h3>
-        <div class="card">
-            <div class="form-row">
-                <input type="text" id="name" placeholder="Название (необязательно)">
-            </div>
-            <div class="form-row">
-                <textarea id="comment" rows="2" placeholder="Комментарий..."></textarea>
-            </div>
+        <!-- Детали -->
+        <div class="form-group">
+            <label>Комментарий / Детали</label>
+            <input type="text" id="details" name="details" placeholder="Например: Ашан">
         </div>
-        
-        <div class="loader" id="loader">Сохранение...</div>
-        <div class="status-msg" id="statusMsg"></div>
-    </div>
 
-    <script>
-        // Инициализация Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        
-        // 1. Сначала расширяем приложение
-        tg.expand();
+        <button type="submit" id="submitBtn" class="main-button">Сохранить</button>
+        <div id="statusMessage" class="status-message"></div>
+    </form>
+</div>
 
-        // 2. Настраиваем параметры кнопки (используем setParams для надежности)
-        tg.MainButton.setParams({
-            text: "СОХРАНИТЬ РАСХОД",
-            color: tg.themeParams.button_color || "#2481cc",
-            text_color: tg.themeParams.button_text_color || "#ffffff",
-            is_active: true,
-            is_visible: true
-        });
+<script>
+    const form = document.getElementById('expenseForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMsg = document.getElementById('statusMessage');
 
-        // URL твоего Google Apps Script (сохранил твой URL)
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz69sYc0YBFlhNtu5CXSJkIoc-CXO0N-OmLgv0MBC5butcGtl8TUxqdZvSTNa501Y6e/exec";
+    // Твой URL вебхука
+    const WEBHOOK_URL = 'https://growingwealth.ru/webhook/expenses';
 
-        // Обработка клика по главной кнопке
-        tg.MainButton.onClick(function() {
-            const amount = document.getElementById('amount').value;
-            const category = document.getElementById('category').value;
-            const name = document.getElementById('name').value;
-            const comment = document.getElementById('comment').value;
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-            // Валидация
-            if (!amount) {
-                tg.HapticFeedback.notificationOccurred('error');
-                showStatus("Введите сумму!", "error");
-                document.getElementById('amount').focus();
-                return;
-            }
-            if (!category) {
-                tg.HapticFeedback.notificationOccurred('error');
-                showStatus("Выберите категорию!", "error");
-                document.getElementById('category').focus();
-                return;
-            }
+        // Блокируем кнопку во избежание двойных нажатий
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Отправка...';
+        statusMsg.style.display = 'none';
 
-            sendData({
-                amount: amount,
-                category: category,
-                name: name,
-                comment: comment,
-                telegram_id: tg.initDataUnsafe?.user?.id,
-                username: tg.initDataUnsafe?.user?.username
-            });
-        });
+        // Собираем данные формы
+        const formData = {
+            amount: document.getElementById('amount').value,
+            category: document.querySelector('input[name="category"]:checked').value,
+            details: document.getElementById('details').value,
+            date: new Date().toISOString() // На всякий случай отправляем и дату
+        };
 
-function sendData(data) {
-    // 1. Проверяем старт
-    alert("Начинаю отправку..."); 
-    
-    tg.MainButton.showProgress();
-    // ... остальной код UI ...
-
-fetch(APPSSCRIPTURL, {
-    method: "POST", // ОБЯЗАТЕЛЬНО
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(data)
-})
-    .then(response => {
-        // 2. Проверяем, пришел ли ответ
-        alert("Ответ сервера: " + response.status); 
-        return response.text(); // Читаем как текст, чтобы увидеть ошибку, если это не JSON
-    })
-    .then(text => {
-        // 3. Смотрим, что внутри
-        alert("Текст ответа: " + text.substring(0, 100)); 
-        
-        try {
-            const result = JSON.parse(text); // Пробуем парсить
-            if (result.success) {
-                alert("Успех!");
-                // ... ваш код успеха ...
+        // Отправка данных
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (response.ok) {
+                // Успех
+                showStatus('Успешно сохранено!', 'success');
+                form.reset();
+                // Возвращаем дефолтную категорию
+                document.querySelector('input[value="Продукты"]').checked = true;
             } else {
-                alert("Ошибка логики: " + result.error);
+                // Ошибка сервера
+                showStatus('Ошибка сервера. Попробуй еще раз.', 'error');
             }
-        } catch (e) {
-            alert("Ошибка парсинга JSON! Пришел HTML?");
-            throw new Error("Сервер вернул не JSON: " + text.substring(0, 50));
-        }
-    })
-    .catch(error => {
-        // 4. Ловим сетевые ошибки
-        alert("CATCH ERROR: " + error.message);
-        // ... ваш код скрытия лоадера ...
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('Ошибка сети. Проверь интернет.', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Сохранить';
+        });
     });
-}
 
-        function showStatus(text, type) {
-            const el = document.getElementById('statusMsg');
-            el.textContent = text;
-            el.className = "status-msg " + type;
-            el.style.display = "block";
-        }
+    function showStatus(text, type) {
+        statusMsg.textContent = text;
+        statusMsg.className = 'status-message ' + (type === 'success' ? 'status-success' : 'status-error');
+        statusMsg.style.display = 'block';
+        
+        // Скрываем сообщение через 3 секунды
+        setTimeout(() => {
+            statusMsg.style.display = 'none';
+        }, 3000);
+    }
+</script>
 
-        // 3. Самое важное: сообщаем, что приложение готово к показу
-        // Это часто исправляет проблему с неотображением элементов
-        tg.ready();
-    </script>
 </body>
-
 </html>
-
